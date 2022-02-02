@@ -5,14 +5,14 @@
       <span>Todo App</span>
 
       <!-- search bar -->
-      <div class="search">
+      <!-- <div class="search">
         <input
           type="text"
           v-model="searchValue"
           name="search"
           placeholder="Search..."
         />
-      </div>
+      </div> -->
     </div>
     <!-- todo input field -->
 
@@ -43,11 +43,6 @@
       <button @click="updateTask()">Update</button>
     </div>
 
-    <!-- for task added,deleted message  -->
-    <p v-if="added" :style="{ color: messageColor[0] }">Todo Added</p>
-    <p v-show="edited" :style="{ color: messageColor[0] }">Todo Updated</p>
-    <p v-show="deleted" :style="{ color: messageColor[1] }">Todo Deleted</p>
-
     <!-- todo display section -->
     <table id="tasklist">
       <tr>
@@ -55,19 +50,20 @@
         <th>Status</th>
         <th>Actions</th>
       </tr>
-      <tr v-for="task in filteredTasks" v-bind:key="task">
+      <tr v-for="(task, index) in filteredTasks" v-bind:key="index">
         <td>{{ task.todo }}</td>
-        <td @click="changeStatus(task)">{{ task.status }}</td>
+        <td @click="changeStatus(task, index)" v-if="task.status">TODO</td>
+        <td @click="changeStatus(task, index)" v-else>DONE</td>
         <td>
           <i
             class="fas fa-pen"
-            @click="editTask(task)"
-            v-if="task.status == 'todo'"
+            @click="editTask(task, index)"
+            v-if="task.status"
             :style="{ color: messageColor[0] }"
           ></i>
           <i
             class="fas fa-trash"
-            @click="deleteTask(task)"
+            @click="deleteTask(index)"
             :style="{ color: messageColor[1] }"
           ></i>
         </td>
@@ -82,79 +78,52 @@ export default {
   data() {
     return {
       todo: "",
-      todos: [],
       newTask: "",
-      status: "todo",
+      status: true,
       searchValue: "",
       edditing: false,
-
-      // message display for add, deleted update todo
-      added: false,
+      selectedIndex: null,
       messageColor: ["teal", "red"],
-      deleted: false,
-      edited: false,
-
-      // message display for add, deleted update todo
     };
   },
   methods: {
     addTask() {
-      if (!this.todo) {
-        alert("Fill up form");
-      } else {
-        this.todos.push({ todo: this.todo, status: this.status });
-      }
-      this.added = true;
+      this.$store.commit("addTask", {
+        todo: this.todo,
+        status: this.status,
+      });
       this.todo = "";
-      setTimeout(() => (this.added = false), 1500);
+      console.log(this.searchValue);
     },
-    deleteTask(task) {
-      // if (confirm("Are you sure ?")) {
-
-      // }
-      this.todos.splice(this.todos.indexOf(task), 1);
-      this.deleted = true;
-      setTimeout(() => (this.deleted = false), 1500);
+    deleteTask(index) {
+      this.$store.commit("deleteTask", index);
     },
-    editTask(task) {
+    editTask(task, index) {
       this.edditing = true;
 
       this.newTask = task.todo;
-      this.selectedIndex = this.todos.indexOf(task);
+      this.selectedIndex = index;
     },
     updateTask() {
-      console.log("updateTask");
-      if (!this.newTask) {
-        alert("Fill the textbox");
-      } else {
-        this.todos.splice(this.selectedIndex, 1, {
-          todo: this.newTask,
-          status: "todo",
-        });
-        this.edited = true;
-        this.newTask = "";
-        setTimeout(() => (this.edited = false), 1500);
-        this.edditing = false;
-      }
+      this.$store.commit("updateTask", {
+        index: this.selectedIndex,
+        todo: this.newTask,
+        status: this.status,
+      });
+
+      this.edditing = false;
     },
-    changeStatus(task) {
-      console.log("status");
-      let index = this.todos.indexOf(task);
-      this.todos.splice(index, 1, {
+    changeStatus(task, index) {
+      this.$store.commit("changeStatus", {
         todo: task.todo,
-        status: "done",
+        index: index,
+        status: task.status,
       });
     },
   },
   computed: {
     filteredTasks() {
-      return this.searchValue
-        ? this.todos.filter((item) => {
-            return item.todo
-              .toUpperCase()
-              .includes(this.searchValue.toUpperCase());
-          })
-        : this.todos;
+      return this.$store.getters.allTodos;
     },
   },
 };
