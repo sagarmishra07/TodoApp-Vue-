@@ -16,8 +16,8 @@
     </div>
     <!-- todo input field -->
 
-    <div v-if="!edditing" class="task-form">
-      <div class="task-input">
+    <div class="task-form">
+      <div class="task-input" v-show="!edditing">
         <input
           type="text"
           v-model="todo"
@@ -25,13 +25,7 @@
           placeholder="Enter Task"
         />
       </div>
-
-      <button @click="addTask()">Add</button>
-    </div>
-
-    <!-- todo edit field -->
-    <div v-else class="task-form">
-      <div class="task-input">
+      <div class="task-input" v-show="edditing">
         <input
           type="text"
           v-model="newTask"
@@ -39,8 +33,9 @@
           placeholder="Enter Task"
         />
       </div>
-
-      <button @click="updateTask()">Update</button>
+      <button @click="edditing ? updateTask() : addTask()">
+        {{ !edditing ? "Add" : "Update" }}
+      </button>
     </div>
 
     <!-- todo display section -->
@@ -52,8 +47,10 @@
       </tr>
       <tr v-for="(task, index) in filteredTasks" v-bind:key="index">
         <td>{{ task.todo }}</td>
-        <td @click="changeStatus(task, index)" v-if="task.status">TODO</td>
-        <td @click="changeStatus(task, index)" v-else>DONE</td>
+        <td @click="changeStatus(task, index)">
+          {{ task.status ? "Todo" : "Done" }}
+        </td>
+
         <td>
           <i
             class="fas fa-pen"
@@ -93,7 +90,6 @@ export default {
         status: this.status,
       });
       this.todo = "";
-      console.log(this.searchValue);
     },
     deleteTask(index) {
       this.$store.commit("deleteTask", index);
